@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/*
+ * Floating gift emoji animation
+ * Each .gift-float-N class will have a unique animation duration and path
+ */
+@keyframes gift-float {
+  0% {
+    transform: translateY(0) scale(1) rotate(-10deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-40px) scale(1.1) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) scale(1) rotate(-10deg);
+    opacity: 0.7;
+  }
+}
+
+@keyframes gift-float-up {
+  0% { transform: translateY(0) scale(1) rotate(-10deg); opacity: 0.7; }
+  50% { transform: translateY(-40px) scale(1.1) rotate(10deg); opacity: 1; }
+  100% { transform: translateY(-80px) scale(1) rotate(-10deg); opacity: 0.7; }
+}
+@keyframes gift-float-down {
+  0% { transform: translateY(0) scale(1) rotate(10deg); opacity: 0.7; }
+  50% { transform: translateY(40px) scale(1.1) rotate(-10deg); opacity: 1; }
+  100% { transform: translateY(80px) scale(1) rotate(-10deg); opacity: 0.7; }
+}
+@keyframes gift-float-left {
+  0% { transform: translateX(0) scale(1) rotate(-10deg); opacity: 0.7; }
+  50% { transform: translateX(-40px) scale(1.1) rotate(10deg); opacity: 1; }
+  100% { transform: translateX(-80px) scale(1) rotate(-10deg); opacity: 0.7; }
+}
+@keyframes gift-float-right {
+  0% { transform: translateX(0) scale(1) rotate(10deg); opacity: 0.7; }
+  50% { transform: translateX(40px) scale(1.1) rotate(-10deg); opacity: 1; }
+  100% { transform: translateX(80px) scale(1) rotate(-10deg); opacity: 0.7; }
+}
+
+@keyframes gift-float-curve1 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    transform: translate(60px, -180px) scale(1.15) rotate(30deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(120px, -400px) scale(1.25) rotate(60deg);
+  }
+}
+@keyframes gift-float-curve2 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-80px, 200px) scale(1.1) rotate(-25deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-180px, 420px) scale(1.2) rotate(-60deg);
+  }
+}
+@keyframes gift-float-curve3 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    transform: translate(120px, 120px) scale(1.2) rotate(15deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(260px, 320px) scale(1.3) rotate(45deg);
+  }
+}
+@keyframes gift-float-curve4 {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-100px, -120px) scale(1.1) rotate(-10deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-220px, -320px) scale(1.2) rotate(-40deg);
+  }
+}
+
+.gift-emoji {
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.8;
+}
+
+.animate-gift-float {
+  animation-name: gift-float;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.animate-gift-float-up {
+  animation-name: gift-float-up;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.animate-gift-float-down {
+  animation-name: gift-float-down;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.animate-gift-float-left {
+  animation-name: gift-float-left;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.animate-gift-float-right {
+  animation-name: gift-float-right;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+.animate-gift-float-curve1 {
+  animation: gift-float-curve1 linear forwards;
+}
+.animate-gift-float-curve2 {
+  animation: gift-float-curve2 linear forwards;
+}
+.animate-gift-float-curve3 {
+  animation: gift-float-curve3 linear forwards;
+}
+.animate-gift-float-curve4 {
+  animation: gift-float-curve4 linear forwards;
+}
+
+.gift-float-0 { animation-duration: 4.2s; }
+.gift-float-1 { animation-duration: 5.1s; }
+.gift-float-2 { animation-duration: 3.7s; }
+.gift-float-3 { animation-duration: 4.8s; }
+.gift-float-4 { animation-duration: 5.5s; }
+.gift-float-5 { animation-duration: 4.0s; }
+.gift-float-6 { animation-duration: 5.3s; }
+.gift-float-7 { animation-duration: 4.6s; }

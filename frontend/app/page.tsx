@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 
 // TypeScript SpeechRecognition type declarations for browser compatibility
 // These are not included by default in TypeScript DOM lib
@@ -279,7 +280,25 @@ export default function Home() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.from === "user" ? "justify-end" : "justify-center"}`}> 
                 <div className={`max-w-[95%] px-4 py-2 rounded-2xl text-base shadow-sm ${msg.from === "user" ? "bg-pink-500 text-white rounded-br-md" : "bg-white/20 dark:bg-gray-800/20 text-gray-800 dark:text-gray-100 rounded-bl-md backdrop-blur-md border border-white/30 dark:border-gray-700/30"}`} style={msg.from === "llm" ? { boxShadow: '0 4px 24px 0 rgba(0,0,0,0.08)' } : {}}>
-                  {msg.text}
+                  {msg.from === "llm" ? (
+                    <div className="markdown-body">
+                      <ReactMarkdown
+                        components={{
+                          h1: (props) => <h1 className="text-2xl font-bold mt-4 mb-2" {...props} />,
+                          h2: (props) => <h2 className="text-xl font-bold mt-3 mb-2" {...props} />,
+                          h3: (props) => <h3 className="text-lg font-semibold mt-2 mb-1" {...props} />,
+                          ul: (props) => <ul className="list-disc ml-6 mb-2" {...props} />,
+                          ol: (props) => <ol className="list-decimal ml-6 mb-2" {...props} />,
+                          li: (props) => <li className="mb-1" {...props} />,
+                          strong: (props) => <strong className="font-bold" {...props} />,
+                          code: (props) => <code className="bg-gray-100 text-pink-600 px-1 rounded" {...props} />,
+                          p: (props) => <p className="mb-2" {...props} />,
+                        }}
+                      >{msg.text}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    msg.text
+                  )}
                 </div>
               </div>
             ))}

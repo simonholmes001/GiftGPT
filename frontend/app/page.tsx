@@ -231,7 +231,7 @@ export default function Home() {
     const newMsg = { from: "llm", text: "" };
     setMessages(msgs => [...msgs, newMsg]);
     try {
-      const res = await fetch("/api/chat/poststream", {
+      const res = await fetch("/api/chat/text-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

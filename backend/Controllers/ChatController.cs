@@ -12,7 +12,7 @@ namespace GiftGPT.Controllers
     [Route("api/[controller]")]
     public class ChatController : ControllerBase
     {
-        [HttpPost]
+        [HttpPost("text-sync")]
         public async Task<IActionResult> Post([FromBody] ChatRequest request)
         {
             if (string.IsNullOrEmpty(request.Message) || string.IsNullOrEmpty(request.ApiKey))
@@ -30,7 +30,7 @@ namespace GiftGPT.Controllers
                 messages = new[] { new { role = "user", content = request.Message } }
             };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var openAiResponse = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
+            using var openAiResponse = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
             var openAiJson = await openAiResponse.Content.ReadAsStringAsync();
             // TODO: Parse openAiJson to extract the actual response text
             responseText = openAiJson;
@@ -38,7 +38,7 @@ namespace GiftGPT.Controllers
             return Ok(new ChatResponse { Text = responseText, AudioCapable = true });
         }
 
-        [HttpPost]
+        [HttpPost("text-stream")]
         public async Task PostStream([FromBody] ChatRequest request)
         {
             if (string.IsNullOrEmpty(request.Message) || string.IsNullOrEmpty(request.ApiKey))
@@ -60,7 +60,7 @@ namespace GiftGPT.Controllers
                 stream = true
             };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            using var openAiResponse = await client.PostAsync("https://api.openai.com/v1/chat/completions", content, HttpCompletionOption.ResponseHeadersRead);
+            using var openAiResponse = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
             var stream = await openAiResponse.Content.ReadAsStreamAsync();
             using var reader = new StreamReader(stream);
             while (!reader.EndOfStream)
@@ -131,7 +131,7 @@ namespace GiftGPT.Controllers
             openAiRequest.Add(new StringContent("true"), "stream");
             // You can add more fields as needed (e.g., system prompt, etc.)
 
-            var openAiResponse = await client.PostAsync("https://api.openai.com/v1/audio/chat/completions", openAiRequest, HttpCompletionOption.ResponseHeadersRead);
+            var openAiResponse = await client.PostAsync("https://api.openai.com/v1/audio/chat/completions", openAiRequest);
             Response.ContentType = openAiResponse.Content.Headers.ContentType?.ToString() ?? "audio/mpeg";
             using var responseStream = await openAiResponse.Content.ReadAsStreamAsync();
             await responseStream.CopyToAsync(Response.Body);

@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using System.Buffers;
+using Microsoft.Extensions.Logging;
 
 namespace GiftGPT.Controllers
 {
@@ -12,9 +13,17 @@ namespace GiftGPT.Controllers
     [Route("api/[controller]")]
     public class ChatController : ControllerBase
     {
+        private readonly ILogger<ChatController> _logger;
+
+        public ChatController(ILogger<ChatController> logger)
+        {
+            _logger = logger;
+        }
+
         [HttpPost("text-sync")]
         public async Task<IActionResult> Post([FromBody] ChatRequest request)
         {
+            _logger.LogInformation("Received text-sync request: {Message}", request.Message);
             if (string.IsNullOrEmpty(request.Message) || string.IsNullOrEmpty(request.ApiKey))
                 return BadRequest(new { error = "Missing required fields." });
 
@@ -23,10 +32,9 @@ namespace GiftGPT.Controllers
             // Only support OpenAI gpt-4o audio
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", request.ApiKey);
-            client.DefaultRequestHeaders.Add("OpenAI-Version", "2024-12-17");
             var payload = new
             {
-                model = "gpt-4o-audio",
+                model = "gpt-4o",
                 messages = new[] { new { role = "user", content = request.Message } }
             };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
@@ -35,37 +43,51 @@ namespace GiftGPT.Controllers
             // TODO: Parse openAiJson to extract the actual response text
             responseText = openAiJson;
 
+            _logger.LogInformation("OpenAI response: {Response}", responseText);
             return Ok(new ChatResponse { Text = responseText, AudioCapable = true });
         }
 
         [HttpPost("text-stream")]
         public async Task PostStream([FromBody] ChatRequest request)
         {
+            _logger.LogInformation("Received text-stream request: {Message}", request.Message);
             if (string.IsNullOrEmpty(request.Message) || string.IsNullOrEmpty(request.ApiKey))
             {
                 Response.StatusCode = 400;
                 await Response.WriteAsync("Missing required fields.");
+                _logger.LogWarning("Missing required fields in text-stream request");
                 return;
             }
 
             Response.ContentType = "text/event-stream";
-            // Only support OpenAI gpt-4o audio
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", request.ApiKey);
-            client.DefaultRequestHeaders.Add("OpenAI-Version", "2024-12-17");
             var payload = new
             {
-                model = "gpt-4o-audio",
+                model = "gpt-4o",
                 messages = new[] { new { role = "user", content = request.Message } },
                 stream = true
             };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            _logger.LogInformation("Sending request to OpenAI chat/completions endpoint");
             using var openAiResponse = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
+            _logger.LogInformation("OpenAI response status: {StatusCode}", openAiResponse.StatusCode);
+            if (!openAiResponse.IsSuccessStatusCode)
+            {
+                var errorContent = await openAiResponse.Content.ReadAsStringAsync();
+                _logger.LogError("OpenAI error response: {Error}", errorContent);
+                Response.StatusCode = (int)openAiResponse.StatusCode;
+                await Response.WriteAsync(errorContent);
+                return;
+            }
             var stream = await openAiResponse.Content.ReadAsStreamAsync();
             using var reader = new StreamReader(stream);
+            int lineCount = 0;
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync();
+                lineCount++;
+                _logger.LogInformation("[Line {LineNum}] Raw line from OpenAI: {Line}", lineCount, line);
                 if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("data:")) continue;
                 var json = line.Substring(5).Trim();
                 if (json == "[DONE]") break;
@@ -80,19 +102,26 @@ namespace GiftGPT.Controllers
                     {
                         await Response.WriteAsync(contentToken);
                         await Response.Body.FlushAsync();
+                        _logger.LogInformation("Streamed token: {Token}", contentToken);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error parsing OpenAI stream response. Raw JSON: {Json}", json);
+                }
             }
+            _logger.LogInformation("Completed text-stream request");
         }
 
         [HttpPost("audio-stream")]
         public async Task AudioStream()
         {
+            _logger.LogInformation("Received audio-stream request");
             if (!Request.HasFormContentType)
             {
                 Response.StatusCode = 400;
                 await Response.WriteAsync("Content-Type must be multipart/form-data");
+                _logger.LogWarning("Missing multipart/form-data in audio-stream request");
                 return;
             }
             var form = await Request.ReadFormAsync();
@@ -101,6 +130,7 @@ namespace GiftGPT.Controllers
             {
                 Response.StatusCode = 400;
                 await Response.WriteAsync("Missing API key");
+                _logger.LogWarning("Missing API key in audio-stream request");
                 return;
             }
             var audioFile = form.Files["audio"];
@@ -109,6 +139,7 @@ namespace GiftGPT.Controllers
             {
                 Response.StatusCode = 400;
                 await Response.WriteAsync("Missing audio or text input");
+                _logger.LogWarning("Missing audio or text input in audio-stream request");
                 return;
             }
 
@@ -132,10 +163,12 @@ namespace GiftGPT.Controllers
             // You can add more fields as needed (e.g., system prompt, etc.)
 
             var openAiResponse = await client.PostAsync("https://api.openai.com/v1/audio/chat/completions", openAiRequest);
+            _logger.LogInformation("OpenAI audio response status: {StatusCode}", openAiResponse.StatusCode);
             Response.ContentType = openAiResponse.Content.Headers.ContentType?.ToString() ?? "audio/mpeg";
             using var responseStream = await openAiResponse.Content.ReadAsStreamAsync();
             await responseStream.CopyToAsync(Response.Body);
             await Response.Body.FlushAsync();
+            _logger.LogInformation("Completed audio-stream request");
         }
     }
 }

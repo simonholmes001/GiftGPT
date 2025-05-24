@@ -272,7 +272,7 @@ export default function Home() {
       <main className="z-10 flex flex-col items-center gap-6 p-4 sm:p-8 w-full max-w-5xl">
         <h1 className="text-5xl sm:text-6xl font-extrabold text-center bg-gradient-to-r from-pink-500 via-blue-500 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg mb-1">GiftGPT</h1>
         <h2 className="text-xl sm:text-2xl text-center font-semibold bg-gradient-to-r from-pink-400 via-blue-400 to-yellow-400 bg-clip-text text-transparent mb-2 mt-0">Your personal gift-finding assistant</h2>
-        <div className="w-full flex flex-col bg-white/90 dark:bg-gray-900/90 rounded-xl shadow-lg p-0 sm:p-2 h-[70vh] max-h-[600px] overflow-y-auto">
+        <div className="w-full flex flex-col bg-white/40 dark:bg-gray-900/40 rounded-xl shadow-lg p-0 sm:p-2 h-[70vh] max-h-[600px] overflow-y-auto">
           <div className="flex flex-col gap-3 p-4 pb-2">
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}> 

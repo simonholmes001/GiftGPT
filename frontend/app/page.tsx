@@ -133,6 +133,8 @@ function FloatingGifts() {
 }
 
 export default function Home() {
+  const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || "";
+
   const [messages, setMessages] = useState<Array<{ from: string; text: string }>>([
     {
       from: "llm",
@@ -185,7 +187,7 @@ export default function Home() {
     setMessages(msgs => [...msgs, { from: "user", text: "[Sent audio message]" }, { from: "llm", text: "" }]);
     const formData = new FormData();
     formData.append("audio", audioBlob, "audio.webm");
-    formData.append("apiKey", "YOUR_OPENAI_API_KEY"); // Replace with your actual key or prompt user securely if needed
+    formData.append("apiKey", OPENAI_API_KEY);
     try {
       const res = await fetch("/api/chat/audio-stream", {
         method: "POST",
@@ -236,7 +238,7 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: input,
-          apiKey: "YOUR_OPENAI_API_KEY" // Replace with your actual key or prompt user securely if needed
+          apiKey: OPENAI_API_KEY
         })
       });
       if (!res.body) throw new Error("No response body");

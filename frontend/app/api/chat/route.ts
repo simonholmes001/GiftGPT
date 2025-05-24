@@ -10,6 +10,22 @@ const MODEL_CONFIG = {
 };
 
 export async function POST(req: NextRequest) {
+  const url = new URL(req.url || '', 'http://localhost');
+  if (url.pathname.endsWith('/text-stream')) {
+    // Forward to backend
+    const body = await req.text();
+    const backendRes = await fetch('http://localhost:5137/api/chat/text-stream', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
+    // Stream the response back to the client
+    return new Response(backendRes.body, {
+      status: backendRes.status,
+      headers: backendRes.headers,
+    });
+  }
+
   try {
     const { message, model, apiKey } = await req.json();
     if (!message || !model || !apiKey) {

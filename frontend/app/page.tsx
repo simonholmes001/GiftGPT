@@ -201,6 +201,19 @@ export default function Home() {
         onToggle={() => setCollapsed((c) => !c)}
         onNewChat={handleNewChat}
       />
+      {/* Floating chat icon button, visible when sidebar is collapsed */}
+      {collapsed && (
+        <button
+          onClick={handleNewChat}
+          className="fixed left-20 top-6 z-30 bg-pink-500 hover:bg-pink-600 text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center transition-colors border-4 border-white dark:border-gray-900"
+          aria-label="New Chat"
+        >
+          {/* Heroicons chat bubble icon */}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12c0-4.556 4.694-8.25 10.5-8.25s10.5 3.694 10.5 8.25-4.694 8.25-10.5 8.25c-1.086 0-2.136-.12-3.125-.344a.75.75 0 00-.563.07l-3.375 1.687a.75.75 0 01-1.09-.82l.375-2.25a.75.75 0 00-.207-.688C2.886 15.36 2.25 13.74 2.25 12z" />
+          </svg>
+        </button>
+      )}
       <div className="flex-1 flex flex-col items-center">
         <FloatingGifts />
         <ChatArea

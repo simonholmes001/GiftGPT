@@ -81,7 +81,30 @@ export default function Home() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const handleNewChat = () => {
+  const handleNewChat = async () => {
+    // Only save if there is more than the initial message
+    if (messages.length > 1) {
+      // Prepare chat session payload
+      const chatSession = {
+        messages: messages.map(m => ({
+          role: m.from === "llm" ? "llm" : "user",
+          content: m.text,
+          timestamp: new Date().toISOString()
+        })),
+        summary: messages.find(m => m.from === "user")?.text?.slice(0, 40) || "GiftGPT chat",
+        title: messages.find(m => m.from === "user")?.text?.slice(0, 40) || "GiftGPT chat"
+      };
+      try {
+        await fetch("/api/chat/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(chatSession)
+        });
+      } catch (e) {
+        // Optionally handle error (e.g., show notification)
+        console.error("Failed to save chat session", e);
+      }
+    }
     setMessages([{ ...initialMessage }]);
     setInput("");
   };
@@ -194,12 +217,32 @@ export default function Home() {
     setLoading(false);
   };
 
+  // Restore a chat session by id
+  const handleSelectSession = async (sessionId: string) => {
+    try {
+      const res = await fetch(`/api/chat/session/${sessionId}`);
+      if (!res.ok) throw new Error("Failed to fetch session");
+      const session = await res.json();
+      // Convert backend messages to frontend format
+      const restoredMessages = session.messages.map((m: any) => ({
+        from: m.role === "llm" ? "llm" : "user",
+        text: m.content
+      }));
+      setMessages(restoredMessages.length > 0 ? restoredMessages : [{ ...initialMessage }]);
+      setInput("");
+    } catch (e) {
+      // Optionally show error
+      console.error(e);
+    }
+  };
+
   return (
     <div className="relative min-h-screen flex flex-row items-stretch justify-center bg-gradient-to-br from-pink-200 via-blue-100 to-yellow-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 overflow-hidden transition-all duration-700">
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
         onNewChat={handleNewChat}
+        onSelectSession={handleSelectSession}
       />
       {/* Floating chat icon button, visible when sidebar is collapsed */}
       {collapsed && (

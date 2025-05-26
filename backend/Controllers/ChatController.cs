@@ -6,6 +6,9 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using System.Buffers;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
+using backend.Models;
+using System.Security.Claims;
 
 namespace GiftGPT.Controllers
 {
@@ -14,10 +17,12 @@ namespace GiftGPT.Controllers
     public class ChatController : ControllerBase
     {
         private readonly ILogger<ChatController> _logger;
+        private readonly IMongoDatabase _database;
 
-        public ChatController(ILogger<ChatController> logger)
+        public ChatController(ILogger<ChatController> logger, IMongoDatabase database)
         {
             _logger = logger;
+            _database = database;
         }
 
         [HttpPost("text-sync")]
@@ -169,6 +174,58 @@ namespace GiftGPT.Controllers
             await responseStream.CopyToAsync(Response.Body);
             await Response.Body.FlushAsync();
             _logger.LogInformation("Completed audio-stream request");
+        }
+
+        [HttpGet("sessions")]
+        public async Task<IActionResult> GetUserChatSessions()
+        {
+            // TODO: Replace with actual user id from authentication
+            var userId = "demo-user-id";
+            var collection = _database.GetCollection<ChatSession>("ChatSessions");
+            var sessions = await collection.Find(s => s.UserId == userId)
+                .Project(s => new { s.Id, s.Summary, s.CreatedAt })
+                .SortByDescending(s => s.CreatedAt)
+                .ToListAsync();
+            return Ok(sessions);
+        }
+
+        [HttpPost("session")]
+        public async Task<IActionResult> SaveChatSession([FromBody] ChatSession session)
+        {
+            // TODO: Replace with actual user id from authentication
+            session.UserId = "demo-user-id";
+            session.CreatedAt = DateTime.UtcNow;
+            if (string.IsNullOrWhiteSpace(session.Summary))
+            {
+                // Generate a summary from the first user message, or fallback to title
+                var firstUserMsg = session.Messages?.FirstOrDefault(m => m.Role == "user")?.Content;
+                session.Summary = !string.IsNullOrWhiteSpace(firstUserMsg)
+                    ? (firstUserMsg.Length > 40 ? firstUserMsg.Substring(0, 40) + "..." : firstUserMsg)
+                    : session.Title;
+            }
+            var collection = _database.GetCollection<ChatSession>("ChatSessions");
+            await collection.InsertOneAsync(session);
+            return Ok(new { session.Id, session.Summary, session.CreatedAt });
+        }
+
+        [HttpPost("session/{id}/favourite")]
+        public async Task<IActionResult> SetFavourite(string id, [FromBody] dynamic body)
+        {
+            var isFavourite = (bool)body.isFavourite;
+            var collection = _database.GetCollection<ChatSession>("ChatSessions");
+            var update = Builders<ChatSession>.Update.Set(s => s.IsFavourite, isFavourite);
+            var result = await collection.UpdateOneAsync(s => s.Id == id, update);
+            if (result.MatchedCount == 0) return NotFound();
+            return Ok();
+        }
+
+        [HttpGet("session/{id}")]
+        public async Task<IActionResult> GetSession(string id)
+        {
+            var collection = _database.GetCollection<ChatSession>("ChatSessions");
+            var session = await collection.Find(s => s.Id == id).FirstOrDefaultAsync();
+            if (session == null) return NotFound();
+            return Ok(session);
         }
     }
 }

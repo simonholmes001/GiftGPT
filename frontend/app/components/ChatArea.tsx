@@ -26,6 +26,14 @@ export default function ChatArea({
   chatEndRef,
   audioPlayerRef
 }: ChatAreaProps) {
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    if (!loading && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [loading]);
+
   return (
     <main className="z-10 flex flex-col items-center gap-6 p-4 sm:p-8 w-full max-w-5xl">
       <h1 className="text-5xl sm:text-6xl font-extrabold text-center bg-gradient-to-r from-pink-500 via-blue-500 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg mb-1">GiftGPT</h1>
@@ -70,6 +78,7 @@ export default function ChatArea({
       <form onSubmit={onSend} className="w-full flex flex-col sm:flex-row items-center gap-2 mt-2">
         <div className="flex w-full gap-2 mt-2 sm:mt-0">
           <input
+            ref={inputRef}
             className="flex-1 rounded-full px-4 py-3 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-400 bg-white dark:bg-gray-900 text-base shadow"
             placeholder="Type your message or use the mic"
             value={input}

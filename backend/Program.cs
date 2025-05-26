@@ -1,3 +1,6 @@
+using MongoDB.Driver;
+using backend.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +8,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+
+// Add MongoDB configuration
+builder.Services.Configure<MongoDbSettings>(
+    builder.Configuration.GetSection("MongoDbSettings"));
+
+builder.Services.AddSingleton<IMongoClient>(s =>
+    new MongoClient(builder.Configuration.GetSection("MongoDbSettings:ConnectionString").Value));
+
+builder.Services.AddScoped<IMongoDatabase>(s =>
+    s.GetRequiredService<IMongoClient>().GetDatabase(
+        builder.Configuration.GetSection("MongoDbSettings:DatabaseName").Value));
 
 var app = builder.Build();
 
